@@ -19,3 +19,13 @@
 *.exe
 *.out
 *.app
+
+# Config
+moted.cfg
+
+
+# Output
+moted
+
+# Mac garbage
+.DS_Store

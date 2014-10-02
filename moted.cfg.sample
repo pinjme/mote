@@ -1,0 +1,9 @@
+[general]
+
+[moted]
+pidfile=/var/run/moted.pid
+user=root
+group=root
+ip-port=9090
+worker-threads=5
+
