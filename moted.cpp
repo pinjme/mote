@@ -15,6 +15,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "INIReader.h"
+#include "include/Mote.h"
 
 // Fastcache should be in mutable mode
 #define FASTCACHE_MUTABLE_DATA
@@ -54,11 +55,17 @@ int main(int argc, char **argv) {
 	string group= reader.Get("moted","group","moted");
 	string pid_file_name= reader.Get("moted","pidfile","/var/run/moted.pid");
 
+	// Read JS
+	ifstream f("server.js");
+	string server_js((istreambuf_iterator<char>(f)),(istreambuf_iterator<char>()));
+	f.close();
+	log_notice("server.js read");
+
 	// Daemonize and setup logging 
 	if(argc==2 && 0==strcmp(argv[1],"-d")) { 
 
 		// -d set.	Don't daemonize
-		writelog(LOG_NOTICE,"-d set.	Not daemonizing.");
+		log_notice("-d set.	Not daemonizing.");
 
 	} else {
 
@@ -108,14 +115,25 @@ int main(int argc, char **argv) {
 	}
 
 	// Go!
+	log_notice("Starting server");
 	stringstream ss; 
-	ss << "Starting server" << endl;
-	ss << "    pid            : " << getpid() << endl; 
-	ss << "    worker threads : " << worker_threads << endl;
-	// ss << "    mysql poolsize : " << mysql_poolsize << endl;
+	ss << "pid: " << getpid() << " / worker threads: " << worker_threads;
 	ss << endl;
-	writelog(LOG_NOTICE, ss.str());
+	log_notice(ss.str());
 
+	Isolate* isolate = Isolate::New();
+	Isolate::Scope isolate_scope(isolate);
+
+	HandleScope handle_scope(isolate);
+
+	Local<Context> context = Context::New(isolate);
+	Context::Scope context_scope(context);
+
+	Local<Script> script=Script::Compile(String::NewFromUtf8(isolate, server_js.c_str()));
+	Local<Value> result=script->Run();
+	String::Utf8Value r(result);
+	log_notice("Finished running scripts");
+	cout << *r << endl;
 
 	closeup(0);
 	return 0;

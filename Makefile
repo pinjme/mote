@@ -1,6 +1,6 @@
 
 LIB := -L/usr/local/lib 
-INC := -I/usr/local/include -Iinih/ -Iinih/cpp/
+INC := -I/usr/local/include -Iinih/ -Iinih/cpp/ -Ilib/
 
 all: moted
 
