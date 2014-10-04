@@ -1,16 +1,16 @@
 
 LIB := -L/usr/local/lib 
-INC := -I/usr/local/include -Iinih/ -Iinih/cpp/ -Ilib/
+INC := -I/usr/local/include -Ilib/inih/ -Ilib/inih/cpp/ -Ilib/ -Isrc/
 
 all: moted
 
 # %.o: %.cpp
 # 	$(CXX) -Wall -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H $(INC) -c $< -o $@
-%.o: %.cpp
-	$(CXX) -Wall $(INC) -c $< -o $@
+%.o: src/%.cpp
+	$(CXX) -Wall $(INC) -c $< -o obj/$@
 
 
-moted: moted.o inih/ini.c inih/cpp/INIReader.cpp
+moted: obj/moted.o lib/inih/ini.c lib/inih/cpp/INIReader.cpp
 	$(CXX) $^ -o $@ $(LIB) -lv8
 
 
@@ -18,4 +18,4 @@ moted: moted.o inih/ini.c inih/cpp/INIReader.cpp
 #	$(CXX) $^ -o $@ $(LIB) -lboost_thread -lboost_system -levent -lssl -lcrypto
 
 clean:
-	$(RM) *.o moted
+	$(RM) obj/*.o moted

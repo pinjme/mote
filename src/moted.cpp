@@ -15,7 +15,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "INIReader.h"
-#include "include/Mote.h"
+#include "Mote.h"
 
 // Fastcache should be in mutable mode
 #define FASTCACHE_MUTABLE_DATA
