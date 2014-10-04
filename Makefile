@@ -6,8 +6,8 @@ all: moted
 
 # %.o: %.cpp
 # 	$(CXX) -Wall -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H $(INC) -c $< -o $@
-%.o: src/%.cpp
-	$(CXX) -Wall $(INC) -c $< -o obj/$@
+obj/%.o: src/%.cpp
+	$(CXX) -Wall $(INC) -c $< -o $@
 
 
 moted: obj/moted.o lib/inih/ini.c lib/inih/cpp/INIReader.cpp
