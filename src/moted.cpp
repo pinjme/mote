@@ -35,6 +35,8 @@ void fatal(string message);
 void log_err(string message);
 void log_notice(string message);
 void signal_handler(int signum);	// Catch SIGHUP, etc
+static void JSlog_notice(const v8::FunctionCallbackInfo<v8::Value>& args);
+
 
 // Globals
 bool daemonized=false;
@@ -49,7 +51,7 @@ int main(int argc, char **argv) {
 	}
 
 	// Set config parameters
-	int ip_port = reader.GetInteger("moted","ip-port",9090);
+	//int ip_port = reader.GetInteger("moted","ip-port",9090);
 	int worker_threads = reader.GetInteger("moted","worker-threads",16);
 	string user= reader.Get("moted","user","moted");
 	string group= reader.Get("moted","group","moted");
@@ -126,14 +128,25 @@ int main(int argc, char **argv) {
 
 	HandleScope handle_scope(isolate);
 
-	Local<Context> context = Context::New(isolate);
+	// Create a global object
+	Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
+	global->Set(String::NewFromUtf8(isolate, "log_notice"), FunctionTemplate::New(isolate, JSlog_notice));
+
+
+	Local<Context> context = Context::New(isolate, NULL, global);
 	Context::Scope context_scope(context);
 
 	Local<Script> script=Script::Compile(String::NewFromUtf8(isolate, server_js.c_str()));
+	TryCatch tc;
 	Local<Value> result=script->Run();
-	String::Utf8Value r(result);
+	if(result.IsEmpty()) {
+		Local<Value> exception =tc.Exception();
+		String::Utf8Value str(exception);
+		fatal(*str);
+	}
+	//String::Utf8Value r(result);
 	log_notice("Finished running scripts");
-	cout << *r << endl;
+	//cout << *r << endl;
 
 	closeup(0);
 	return 0;
@@ -152,6 +165,21 @@ void log_notice(string message) {
 	writelog(LOG_NOTICE,message);
 
 }
+
+
+static void JSlog_notice(const v8::FunctionCallbackInfo<v8::Value>& args) {
+
+	if(args.Length() <1 ) {
+
+		return;
+	}
+
+	HandleScope scope(args.GetIsolate());
+	Handle<Value> arg=args[0];
+	String::Utf8Value value(arg);
+	log_notice(*value);
+}
+
 
 void log_err(string message) {
 
