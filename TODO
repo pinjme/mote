@@ -1,0 +1,10 @@
+
+for some reason, code does not run when it is in ->run of V8Engine (only when it is run in the constructor).  Need to learn more about context scopes, etc
+
+use our nice logger class instead of global functions.  Including fatal()?
+
+use some test framework instead of a bunch of "test" files?
+
+make sure V8Engine compiles all v8 code into one .o so compile times are fast!
+
+

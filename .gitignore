@@ -23,7 +23,8 @@
 # Config
 moted.cfg
 
-
+# V8
+lib/v8/v8
 # Output
 moted
 

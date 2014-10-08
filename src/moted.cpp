@@ -1,4 +1,3 @@
-#include <v8/v8.h>
 #include <stdlib.h>
 #include <iostream>
 #include <memory>
@@ -16,6 +15,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "INIReader.h"
 #include "Mote.h"
+#include "V8Engine.h"
 
 // Fastcache should be in mutable mode
 #define FASTCACHE_MUTABLE_DATA
@@ -24,7 +24,6 @@
 
 using boost::shared_ptr;
 using namespace active911;
-using namespace v8;
 using namespace std;
 //using active911::Fastcache;
 
@@ -35,7 +34,6 @@ void fatal(string message);
 void log_err(string message);
 void log_notice(string message);
 void signal_handler(int signum);	// Catch SIGHUP, etc
-static void JSlog_notice(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 
 // Globals
@@ -123,27 +121,10 @@ int main(int argc, char **argv) {
 	ss << endl;
 	log_notice(ss.str());
 
-	Isolate* isolate = Isolate::New();
-	Isolate::Scope isolate_scope(isolate);
 
-	HandleScope handle_scope(isolate);
+	V8Engine* e=new V8Engine(i);
+	e->run(server_js);
 
-	// Create a global object
-	Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
-	global->Set(String::NewFromUtf8(isolate, "log_notice"), FunctionTemplate::New(isolate, JSlog_notice));
-
-
-	Local<Context> context = Context::New(isolate, NULL, global);
-	Context::Scope context_scope(context);
-
-	Local<Script> script=Script::Compile(String::NewFromUtf8(isolate, server_js.c_str()));
-	TryCatch tc;
-	Local<Value> result=script->Run();
-	if(result.IsEmpty()) {
-		Local<Value> exception =tc.Exception();
-		String::Utf8Value str(exception);
-		fatal(*str);
-	}
 	//String::Utf8Value r(result);
 	log_notice("Finished running scripts");
 	//cout << *r << endl;
@@ -166,19 +147,6 @@ void log_notice(string message) {
 
 }
 
-
-static void JSlog_notice(const v8::FunctionCallbackInfo<v8::Value>& args) {
-
-	if(args.Length() <1 ) {
-
-		return;
-	}
-
-	HandleScope scope(args.GetIsolate());
-	Handle<Value> arg=args[0];
-	String::Utf8Value value(arg);
-	log_notice(*value);
-}
 
 
 void log_err(string message) {
