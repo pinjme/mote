@@ -3,47 +3,60 @@
 extern void log_notice(string message);
 extern void fatal(string message);
 
+// Initialize the system-wide plaform
+//Platform* V8Engine::platform=platform::CreateDefaultPlatform();
+
+void V8Engine::initialize_v8(){
+
+	// Initialize
+	V8::InitializeICU();
+	V8::InitializePlatform(platform::CreateDefaultPlatform());//V8Engine::platform);
+	V8::Initialize();
+
+
+}
+
 
 V8Engine::V8Engine() {
 
-	v8::V8::InitializeICU();
-	platform=v8::platform::CreateDefaultPlatform();
-	v8::V8::InitializePlatform(platform);
-	v8::V8::Initialize();
 
-	isolate=Isolate::New();
-	Isolate::Scope isolate_scope(isolate);
-
-	HandleScope handle_scope(isolate);
+	// Set up isolate
+	_isolate=Isolate::New();
+	Isolate::Scope isolate_scope(_isolate);
 
 	// Create a global object
-	// Handle<ObjectTemplate> global = ObjectTemplate::New(isolate);
-	// global->Set(String::NewFromUtf8(isolate, "log_notice"), FunctionTemplate::New(isolate, JSlog_notice));
+	HandleScope handle_scope(_isolate);
+	Handle<ObjectTemplate> global = ObjectTemplate::New(_isolate);
+	global->Set(String::NewFromUtf8(_isolate, "log_notice"), FunctionTemplate::New(_isolate, JSlog_notice));
 
-	// Set up a context with this global
-//	Handle<Context> cx = Context::New(isolate, NULL, global);
-	Handle<Context> cx = Context::New(isolate);
-	context.Reset(isolate,cx);
-	Context::Scope context_scope(cx);
-
+	// Set up a permanent context with our global
+	Handle<Context> context = Context::New(_isolate, NULL, global);
+	_context.Reset(_isolate,context);
+//	Context::Scope context_scope(cx);
 
 }
 
 V8Engine::~V8Engine() {
 
-	context.Reset();
-	isolate->Dispose();
+	_context.Reset();
+	_isolate->Dispose();
 
 }
 
 void V8Engine::run(string str){
 
-	//Isolate::Scope isolate_scope(isolate);
 
-	HandleScope handle_scope(isolate);
+	Isolate::Scope isolate_scope(_isolate);		// We get segfault if we don't do this
+
+	// Create scope
+	HandleScope handle_scope(_isolate);
+
+	// Create a new handle bound to the permenent context
+	Local<Context> context=Local<Context>::New(_isolate, _context);
 	Context::Scope context_scope(context);
 
-	Handle<Script> script=Script::Compile(String::NewFromUtf8(isolate, "\"whzsssup\"")); //str.c_str()));
+	// Create and run the script
+	Handle<Script> script=Script::Compile(String::NewFromUtf8(_isolate, "log_notice('Hey there!!!');")); //str.c_str()));
 	TryCatch tc;
 	Local<Value> result=script->Run();
 	if(result.IsEmpty()) {
@@ -52,13 +65,13 @@ void V8Engine::run(string str){
 		fatal(*str);
 	}
 
-	String::Utf8Value s(result);
-	printf("%s\n",*s);
+	// String::Utf8Value s(result);
+	// printf("%s\n",*s);
 
 
 }
 
-void V8Engine::JSlog_notice(const v8::FunctionCallbackInfo<v8::Value>& args) {
+void V8Engine::JSlog_notice(const FunctionCallbackInfo<Value>& args) {
 
 	if(args.Length() <1 ) {
 

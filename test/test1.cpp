@@ -10,6 +10,8 @@ void fatal(string message);
 
 int main(int argc, char **argv) {
 
+  V8Engine::initialize_v8();
+
   V8Engine* e=new V8Engine();
 //  e->run("log_notice(\"Worked!\");");
   e->run("\"Worked!\"");
